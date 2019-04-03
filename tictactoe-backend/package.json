@@ -1,0 +1,20 @@
+{
+  "name": "tictactoe",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./build/server.js",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "ts-node-dev --respawn --transpileOnly ./app/server.ts",
+    "prod": "tsc && node ./build/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^11.12.2",
+    "@types/websocket": "0.0.40",
+    "ts-node-dev": "^1.0.0-pre.32",
+    "typescript": "^3.4.1",
+    "websocket": "^1.0.28"
+  }
+}

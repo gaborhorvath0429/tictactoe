@@ -1,0 +1,22 @@
+<div class="lobby-wrapper">
+  <div class="lobby">
+    <div class="lobby-users">
+      <button class="start-ai">Start game against AI</button>
+      <h1>or against available players:</h1>
+      <ng-container *ngIf="game.users.length > 0; else noplayers">
+        <ul class="lobby-users-list">
+          <div class="lobby-user" *ngFor="let user of game.users">
+            <button>Challenge</button>
+            <li>{{ user }}</li>
+          </div>
+        </ul>
+      </ng-container>
+      <ng-template #noplayers>
+        No players online :(
+      </ng-template>
+    </div>
+    <div class="lobby-games">
+      <h1>Running games</h1>
+    </div>
+  </div>
+</div>

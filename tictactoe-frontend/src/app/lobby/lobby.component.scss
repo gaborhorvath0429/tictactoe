@@ -1,0 +1,75 @@
+.lobby-wrapper {
+  background-image: linear-gradient(#c0b8a5, #e1e0db);
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+  overflow: hidden;
+
+  .lobby {
+    display: flex;
+    justify-content: space-evenly;
+
+    h1 {
+      margin-bottom: 1.2rem;
+    }
+
+    .lobby-users {
+      .start-ai {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.3rem;
+        color: #E1E0DB;
+        background-color: #313A3D;
+        border: none;
+        outline: none;
+        border-radius: 5px;
+        margin-bottom: 2rem;
+        cursor: pointer;
+      }
+
+      margin-top: 20vh;
+      text-align: center;
+      margin-top: 20vh;
+      text-align: center;
+      background-color: #c0b8a5;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 10px 10px 13px -10px rgba(0, 0, 0, 0.75);
+
+      ul {
+        list-style: none;
+
+        button {
+          padding: 1rem;
+          font-size: 1.3rem;
+          color: #E1E0DB;
+          background-color: #313A3D;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          border-bottom-left-radius: 5px;
+          border-top-left-radius: 5px;
+        }
+
+        li {
+          display: inline-block;
+          background-color: #e1e0db;
+          border-bottom-right-radius: 5px;
+          border-top-right-radius: 5px;
+          font-size: 1.3rem;
+          padding: 1rem;
+          margin-bottom: 0.5rem;
+          position: relative;
+
+          &.in-game::after {
+            color: red;
+          }
+        }
+      }
+    }
+
+    .lobby-games {
+      margin-top: 20vh;
+    }
+  }
+}
