@@ -46,7 +46,6 @@ export class GameService {
     let { message: msg } = message
     switch (message.type) {
       case 'users':
-        console.log(msg)
         this.users = msg
         break
 

@@ -1,6 +1,11 @@
 <div class="lobby-wrapper">
+  <div class="challenge-notification box">
+    <h1>New challenge</h1>
+    <div class="button accept"></div>
+    <div class="button decline">Decline</div>
+  </div>
   <div class="lobby">
-    <div class="lobby-users">
+    <div class="lobby-users box">
       <button class="start-ai">Start game against AI</button>
       <h1>or against available players:</h1>
       <ng-container *ngIf="game.users.length > 0; else noplayers">
@@ -15,7 +20,7 @@
         No players online :(
       </ng-template>
     </div>
-    <div class="lobby-games">
+    <div class="lobby-games box">
       <h1>Running games</h1>
     </div>
   </div>
