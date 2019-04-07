@@ -1,27 +1,51 @@
 <div class="lobby-wrapper">
-  <div class="challenge-notification box">
-    <h1>New challenge</h1>
-    <div class="button accept"></div>
-    <div class="button decline">Decline</div>
+  <div class="challenges">
+    <ng-container *ngIf="game.challenges.length">
+      <div
+        class="challenge-notification box"
+        *ngFor="let name of game.challenges"
+      >
+        <h1>You challenged {{ name }}</h1>
+        <div class="button decline" (click)="game.cancelChallenge(name)"></div>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="game.challengers.length">
+      <div
+        class="challenge-notification box"
+        *ngFor="let challenger of game.challengers"
+      >
+        <h1>New challenge from {{ challenger }}</h1>
+        <div class="button decline" (click)="game.declineChallenge(challenger)"></div>
+        <div class="button accept" (click)="game.acceptChallenge(challenger)"></div>
+      </div>
+    </ng-container>
   </div>
   <div class="lobby">
-    <div class="lobby-users box">
+    <div class="lobby-list box">
       <button class="start-ai">Start game against AI</button>
       <h1>or against available players:</h1>
-      <ng-container *ngIf="game.users.length > 0; else noplayers">
-        <ul class="lobby-users-list">
-          <div class="lobby-user" *ngFor="let user of game.users">
-            <button>Challenge</button>
+      <ng-container *ngIf="game.users.length; else noplayers">
+        <ul>
+          <div class="lobby-item" *ngFor="let user of game.users">
+            <button (click)="game.challenge(user)">Challenge</button>
             <li>{{ user }}</li>
           </div>
         </ul>
       </ng-container>
       <ng-template #noplayers>
-        No players online :(
+        No players available :(
       </ng-template>
     </div>
-    <div class="lobby-games box">
+    <div class="lobby-list box">
       <h1>Running games</h1>
+      <ng-container *ngIf="game.games.length">
+          <ul>
+            <div class="lobby-item" *ngFor="let game of game.games">
+              <button (click)="game.spectate(game)">Spectate</button>
+              <li>{{ game.O + ' vs ' + game.X }}</li>
+            </div>
+          </ul>
+        </ng-container>
     </div>
   </div>
 </div>

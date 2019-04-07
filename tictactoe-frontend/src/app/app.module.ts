@@ -7,12 +7,14 @@ import { LoginComponent } from './login/login.component';
 import { LobbyComponent } from './lobby/lobby.component';
 import { GameService } from './game.service';
 import { HttpClientModule } from '@angular/common/http';
+import { BoardComponent } from './board/board.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
-    LobbyComponent
+    LobbyComponent,
+    BoardComponent
   ],
   imports: [
     BrowserModule,
