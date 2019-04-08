@@ -16,6 +16,7 @@ interface Game {
   board: Array<string | number>
   X: User
   O: User
+  spectators: Array<websocket.connection>
 }
 
 /** Class representing the websocket server */
@@ -84,9 +85,12 @@ export default class WebSocketServer {
         this.acceptChallenge(from, to)
         break
       case 'leaveGame':
-        this.users.push({ name: msg.name, connection })
+        this.addUser(connection, msg.name)
         let { game, opponent } = this.getGame(connection)
         if (opponent) this.leaveGame(game, opponent)
+        break
+      case 'spectate':
+        this.addSpectator(connection, msg.O, msg.X)
         break
       case 'turn':
         this.makeTurn(connection, msg.player, msg.board)
@@ -101,7 +105,11 @@ export default class WebSocketServer {
   /**
    * Makes a turn and emits the new board to the opponent.
    */
-  private makeTurn(connection: websocket.connection, player: string, board: Array<string | number>) {
+  private makeTurn(
+    connection: websocket.connection,
+    player: string,
+    board: Array<string | number>
+  ) {
     let { game } = this.getGame(connection)
     game.board = board
     let winner = Game.checkWinner(board)
@@ -112,22 +120,27 @@ export default class WebSocketServer {
     })
     game.O.connection.sendUTF(msg)
     game.X.connection.sendUTF(msg)
+    if (game.spectators.length) {
+      for (let spectator of game.spectators) {
+        spectator.sendUTF(msg)
+      }
+    }
   }
 
   /**
    * Adds user to users list.
    */
   private addUser(connection: websocket.connection, name: string): void {
+    if (this.users.find(user => user.connection === connection)) return
     this.users.push({ name, connection })
 
     // Emit online users to new user.
-    connection.sendUTF(
-      JSON.stringify({
-        type: 'users',
-        message: this.users
-          .filter(user => user.connection !== connection)
-          .map(user => user.name)
-      })
+    this.send(
+      connection,
+      'users',
+      this.users
+        .filter(user => user.connection !== connection)
+        .map(user => user.name)
     )
   }
 
@@ -146,12 +159,7 @@ export default class WebSocketServer {
    */
   public challengeUser(from: User, to: User): void {
     this.challenges.push({ from, to })
-    to.connection.sendUTF(
-      JSON.stringify({
-        type: 'challenge',
-        message: from.name
-      })
-    )
+    this.send(to.connection, 'challenge', from.name)
   }
 
   /**
@@ -161,12 +169,7 @@ export default class WebSocketServer {
     this.challenges = this.challenges.filter(
       challenge => challenge !== { from, to }
     )
-    to.connection.sendUTF(
-      JSON.stringify({
-        type: 'cancelChallenge',
-        message: from.name
-      })
-    )
+    this.send(to.connection, 'cancelChallenge', from.name)
   }
 
   /**
@@ -176,12 +179,7 @@ export default class WebSocketServer {
     this.challenges = this.challenges.filter(
       challenge => challenge !== { from, to }
     )
-    to.connection.sendUTF(
-      JSON.stringify({
-        type: 'declineChallenge',
-        message: from.name
-      })
-    )
+    this.send(to.connection, 'declineChallenge', from.name)
   }
 
   /**
@@ -194,13 +192,13 @@ export default class WebSocketServer {
         [from, to].indexOf(challenge.to) === -1
     )
     this.users = this.users.filter(user => [from, to].indexOf(user) === -1)
-    this.games.push({ X: from, O: to, board: Array.from(Array(9).keys()) })
-    to.connection.sendUTF(
-      JSON.stringify({
-        type: 'acceptChallenge',
-        message: from.name
-      })
-    )
+    this.games.push({
+      X: from,
+      O: to,
+      board: Array.from(Array(9).keys()),
+      spectators: []
+    })
+    this.send(to.connection, 'acceptChallenge', from.name)
   }
 
   /**
@@ -208,7 +206,7 @@ export default class WebSocketServer {
    */
   public getGame(
     connection: websocket.connection
-  ): { game: Game; opponent: User } {
+  ): { game: Game | null; opponent: User | null } {
     let opponent: User = null
     let game: Game = null
     for (let item of this.games) {
@@ -226,15 +224,23 @@ export default class WebSocketServer {
     return { game, opponent }
   }
 
+  public addSpectator(connection: websocket.connection, O: string, X: string) {
+    let board
+    this.games = this.games.map(game => {
+      if (game.O.name === O && game.X.name === X) {
+        board = game.board
+        game.spectators.push(connection)
+      }
+      return game
+    })
+    this.send(connection, 'spectate', board)
+  }
+
   /**
    * User leaves game.
    */
   public leaveGame(game: Game, opponent: User): void {
-    opponent.connection.sendUTF(
-      JSON.stringify({
-        type: 'leaveGame'
-      })
-    )
+    this.send(opponent.connection, 'leaveGame')
     this.games = this.games.filter(item => item !== game)
   }
 
@@ -243,13 +249,12 @@ export default class WebSocketServer {
    */
   private emitUsers(): void {
     for (let client of this.users) {
-      client.connection.sendUTF(
-        JSON.stringify({
-          type: 'users',
-          message: this.users
-            .filter(user => user.connection !== client.connection)
-            .map(user => user.name)
-        })
+      this.send(
+        client.connection,
+        'users',
+        this.users
+          .filter(user => user.connection !== client.connection)
+          .map(user => user.name)
       )
     }
   }
@@ -259,12 +264,22 @@ export default class WebSocketServer {
    */
   private emitGames(): void {
     for (let client of this.users) {
-      client.connection.sendUTF(
-        JSON.stringify({
-          type: 'games',
-          message: this.games.map(game => ({ O: game.O.name, X: game.X.name }))
-        })
+      this.send(
+        client.connection,
+        'games',
+        this.games.map(game => ({ O: game.O.name, X: game.X.name }))
       )
     }
+  }
+
+  /**
+   * Sends (emits) a message to client through websocket.
+   */
+  private send(
+    connection: websocket.connection,
+    type: string,
+    message?: any
+  ): void {
+    connection.sendUTF(JSON.stringify({ type, message }))
   }
 }

@@ -16,7 +16,17 @@
     border-radius: 5px;
     color: white;
     margin-bottom: 4rem;
+    z-index: 2;
     cursor: pointer;
+  }
+
+  .spectator {
+    position: absolute;
+    z-index: 1;
+    width: 100vw;
+    height: 100vh;
+    left: 0;
+    top: 0;
   }
 
   h1.status {

@@ -23,9 +23,10 @@ export class GameService {
   public challenges: string[] = []
   public challengers: string[] = []
   public board: Array<string | number>
+  public locked: boolean = false
   public status: string = ''
   public player: string
-  public locked: boolean = false
+  public spectator: boolean
 
   constructor(private http: HttpClient, private router: Router) {
     this.ws.subscribe(
@@ -60,6 +61,9 @@ export class GameService {
       case 'leaveGame':
         this.status = 'Your opponent has left the game!'
         break
+      case 'spectate':
+        this.spectatorEnter(msg)
+      break
       case 'turn':
         this.board = msg.board
         if (msg.winner) {
@@ -135,6 +139,7 @@ export class GameService {
     this.player = player
     this.status = ''
     this.locked = false
+    this.spectator = false
     this.router.navigateByUrl('/board')
   }
 
@@ -142,11 +147,21 @@ export class GameService {
     this.ws.next({ type: 'leaveGame', name: this.userName })
   }
 
+  public spectate(game: { O: string; X: string }): void {
+    this.ws.next({ type: 'spectate', O: game.O, X: game.X })
+  }
+
+  public spectatorEnter(board: Array<string | number>): void {
+    this.board = board
+    this.spectator = true
+    this.router.navigateByUrl('/board')
+  }
+
   public getCell(index: number): string | number {
     return typeof this.board[index] === 'number' ? '' : this.board[index]
   }
 
-  public turnClick(e) {
+  public turnClick(e): void {
     if (this.locked) return
     let { id } = e.target
     if (typeof this.board[id] == 'number') {

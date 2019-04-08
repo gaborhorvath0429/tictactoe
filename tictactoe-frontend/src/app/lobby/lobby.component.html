@@ -40,9 +40,9 @@
       <h1>Running games</h1>
       <ng-container *ngIf="game.games.length">
           <ul>
-            <div class="lobby-item" *ngFor="let game of game.games">
-              <button (click)="game.spectate(game)">Spectate</button>
-              <li>{{ game.O + ' vs ' + game.X }}</li>
+            <div class="lobby-item" *ngFor="let runningGame of game.games">
+              <button (click)="game.spectate(runningGame)">Spectate</button>
+              <li>{{ runningGame.O + ' vs ' + runningGame.X }}</li>
             </div>
           </ul>
         </ng-container>
