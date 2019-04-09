@@ -1,47 +1,55 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const http = __importStar(require("http"));
-const websocket_1 = __importDefault(require("./components/websocket"));
-/** Class representing the http server */
+const websocketServer_1 = __importDefault(require("./components/websocketServer"));
+const httpServer_1 = __importDefault(require("./components/httpServer"));
+/** Class representing the server */
 class Server {
     /**
-     * Create http server.
+     * Create and start server components.
      */
-    constructor() {
-        this.server = http.createServer((req, res) => {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            let { url } = req;
-            if (url === '/about') {
-                res.write('<h1>about us page<h1>');
+    constructor(port) {
+        /**
+         * Handles http requests.
+         */
+        this.httpRouter = (req, res) => {
+            // needed for CORS
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Request-Method', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
+            res.setHeader('Access-Control-Allow-Headers', '*');
+            if (req.method === 'OPTIONS') {
+                res.writeHead(200);
                 res.end();
+                return;
             }
-        });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            let { url, method } = req;
+            if (url === '/login' && method === 'POST') {
+                this.httpServer.collectRequestData(req, (result) => {
+                    let users = this.webSocketServer.users.map(user => user.name);
+                    let success = users.indexOf(result.name) === -1 ? true : false;
+                    res.end(JSON.stringify({ success }));
+                });
+            }
+        };
+        this.initHttpServer();
         this.initWebSocketServer();
+        this.httpServer.listen(port);
+    }
+    /**
+     * Inits http server.
+     */
+    initHttpServer() {
+        this.httpServer = new httpServer_1.default(this.httpRouter);
     }
     /**
      * Inits websocket server.
      */
     initWebSocketServer() {
-        this.webSocketServer = new websocket_1.default().create(this.server);
-    }
-    /**
-     * Start the http server.
-     * @param {Number} port
-     */
-    listen(port) {
-        this.server.listen(port, () => {
-            console.log('server started at port ' + port);
-        });
+        this.webSocketServer = new websocketServer_1.default(this.httpServer.server);
     }
 }
-new Server().listen(3000);
+new Server(3000);
