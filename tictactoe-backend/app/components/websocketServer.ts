@@ -139,6 +139,7 @@ export default class WebSocketServer {
     board: Array<string | number>
   ) {
     let { game } = this.getGame(connection)
+    if (!game) return
     game.board = Game.makeAiTurn(board)
     let winner = Game.checkWinner(board)
     let msg = JSON.stringify({
@@ -159,24 +160,12 @@ export default class WebSocketServer {
   private addUser(connection: websocket.connection, name: string): void {
     if (this.users.find(user => user.connection === connection)) return
     this.users.push({ name, connection })
-
-    // Emit online users to new user.
-    this.send(
-      connection,
-      'users',
-      this.users
-        .filter(user => user.connection !== connection)
-        .map(user => user.name)
-    )
   }
 
   /**
    * Removes user from users list.
    */
   private removeUser(connection: websocket.connection): void {
-    console.log(
-      new Date() + ' Peer ' + connection.remoteAddress + ' disconnected.'
-    )
     this.users = this.users.filter(user => user.connection !== connection)
   }
 

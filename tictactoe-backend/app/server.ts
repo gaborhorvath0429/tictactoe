@@ -3,17 +3,23 @@ import WebSocketServer from './components/websocketServer'
 import HttpServer from './components/httpServer';
 
 /** Class representing the server */
-class Server {
+export default class Server {
   private webSocketServer: WebSocketServer
   private httpServer: HttpServer
 
   /**
-   * Create and start server components.
+   * Create server components.
    */
-  constructor(port: number) {
+  constructor() {
     this.initHttpServer()
     this.initWebSocketServer()
-    this.httpServer.listen(port)
+  }
+
+  /**
+   * Start the server.
+   */
+  public listen(port: number, callback: Function): void {
+    this.httpServer.listen(port, callback)
   }
 
   /**
@@ -55,5 +61,3 @@ class Server {
     }
   }
 }
-
-new Server(3000)

@@ -1,6 +1,6 @@
 import * as http from 'http'
 
-/** Class representing the https server */
+/** Class representing the http server */
 export default class HttpServer {
   public server: http.Server
 
@@ -11,10 +11,8 @@ export default class HttpServer {
   /**
    * Starts the http server.
    */
-  public listen(port: Number): void {
-    this.server.listen(port, () => {
-      console.log('server started at port ' + port)
-    })
+  public listen(port: number, callback: Function): void {
+    this.server.listen(port, callback(port))
   }
 
   /**
