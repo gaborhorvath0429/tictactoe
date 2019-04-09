@@ -24,6 +24,7 @@ export class GameService {
   public challengers: string[] = []
   public board: Array<string | number>
   public locked: boolean = false
+  public ai: boolean = false
   public status: string = ''
   public player: string
   public spectator: boolean
@@ -140,6 +141,7 @@ export class GameService {
     this.status = ''
     this.locked = false
     this.spectator = false
+    this.ai = false
     this.router.navigateByUrl('/board')
   }
 
@@ -167,7 +169,24 @@ export class GameService {
     if (typeof this.board[id] == 'number') {
       this.board[id] = this.player
       this.locked = true
-      this.ws.next({ type: 'turn', player: this.player, board: this.board })
+      if (this.ai) {
+        this.ws.next({ type: 'AITurn', board: this.board })
+      } else {
+        this.ws.next({ type: 'turn', player: this.player, board: this.board })
+      }
     }
+  }
+
+  public startAIGame(): void {
+    this.challengers = []
+    this.challenges = []
+    this.player = 'O'
+    this.board = Array.from(Array(9).keys())
+    this.status = ''
+    this.locked = false
+    this.spectator = false
+    this.ai = true
+    this.router.navigateByUrl('/board')
+    this.ws.next({ type: 'startAI' })
   }
 }

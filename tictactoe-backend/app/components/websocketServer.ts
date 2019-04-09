@@ -4,7 +4,7 @@ import Game from '../helpers/game'
 
 interface User {
   name: string
-  connection: websocket.connection
+  connection?: websocket.connection
 }
 
 interface Challenge {
@@ -48,9 +48,7 @@ export default class WebSocketServer {
         })
 
         connection.on('close', () => {
-          // check if user had any running games
-          let { game, opponent } = this.getGame(connection)
-          if (opponent) this.leaveGame(game, opponent)
+          this.leaveGame(connection)
           this.removeUser(connection)
         })
       } catch (e) {
@@ -86,14 +84,19 @@ export default class WebSocketServer {
         break
       case 'leaveGame':
         this.addUser(connection, msg.name)
-        let { game, opponent } = this.getGame(connection)
-        if (opponent) this.leaveGame(game, opponent)
+        this.leaveGame(connection)
         break
       case 'spectate':
         this.addSpectator(connection, msg.O, msg.X)
         break
+      case 'startAI':
+        this.startAI(connection)
+        break
       case 'turn':
         this.makeTurn(connection, msg.player, msg.board)
+        break
+      case 'AITurn':
+        this.makeAITurn(connection, msg.board)
         break
       default:
         break
@@ -120,6 +123,29 @@ export default class WebSocketServer {
     })
     game.O.connection.sendUTF(msg)
     game.X.connection.sendUTF(msg)
+    if (game.spectators.length) {
+      for (let spectator of game.spectators) {
+        spectator.sendUTF(msg)
+      }
+    }
+  }
+
+  /**
+   * Makes a turn against AI, find a spot for the AI and
+   * emits the new board to the opponent.
+   */
+  private makeAITurn(
+    connection: websocket.connection,
+    board: Array<string | number>
+  ) {
+    let { game } = this.getGame(connection)
+    game.board = Game.makeAiTurn(board)
+    let winner = Game.checkWinner(board)
+    let msg = JSON.stringify({
+      type: 'turn',
+      message: { board, next: 'O', winner }
+    })
+    game.O.connection.sendUTF(msg)
     if (game.spectators.length) {
       for (let spectator of game.spectators) {
         spectator.sendUTF(msg)
@@ -239,8 +265,11 @@ export default class WebSocketServer {
   /**
    * User leaves game.
    */
-  public leaveGame(game: Game, opponent: User): void {
-    this.send(opponent.connection, 'leaveGame')
+  public leaveGame(connection: websocket.connection): void {
+    // check if user had any running games
+    let { game, opponent } = this.getGame(connection)
+    if (opponent && opponent.connection)
+      this.send(opponent.connection, 'leaveGame')
     this.games = this.games.filter(item => item !== game)
   }
 
@@ -257,6 +286,19 @@ export default class WebSocketServer {
           .map(user => user.name)
       )
     }
+  }
+
+  /**
+   * Starts game against AI.
+   */
+  private startAI(connection: websocket.connection): void {
+    this.games.push({
+      X: { name: 'AI' },
+      O: this.users.find(user => user.connection === connection),
+      board: Array.from(Array(9).keys()),
+      spectators: []
+    })
+    this.removeUser(connection)
   }
 
   /**

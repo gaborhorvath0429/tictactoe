@@ -22,7 +22,7 @@
   </div>
   <div class="lobby">
     <div class="lobby-list box">
-      <button class="start-ai">Start game against AI</button>
+      <button class="start-ai" (click)="game.startAIGame()">Start game against AI</button>
       <h1>or against available players:</h1>
       <ng-container *ngIf="game.users.length; else noplayers">
         <ul>
