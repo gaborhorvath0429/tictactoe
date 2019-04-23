@@ -14,5 +14,5 @@ Several test cases for critical logic are also implemented with Mocha & Chai.
 - ```npm install``` in both client and server folders
 
 # Running
-- ```ng serve --open``` in client folder (if no angular CLI then ```npm install -g @angular/cli```)
 - ```npm run dev``` in backend folder
+- ```ng serve --open``` in client folder (if no angular CLI then ```npm install -g @angular/cli```)
